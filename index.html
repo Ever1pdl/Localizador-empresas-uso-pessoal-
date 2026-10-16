@@ -341,4 +341,29 @@ function render(){
    ${l.email?`<a href="mailto:${esc(l.email)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body.join("\n").trim())}">E-mail</a>`:""}
    <button data-copy="${esc(l.id)}">Copiar mensagem</button>
    <a href="${esc(l.osm)}" target="_blank" rel="noopener">OSM</a>
-   <select data-st="${esc(l.id)}" aria-la
+   <select data-st="${esc(l.id)}" aria-label="Situação">${["novo","contatado","respondeu","fechado","descartado"].map(s=>`<option ${s==st?"selected":""}>${s}</option>`).join("")}</select>
+  </div></div>`;
+ }).join(""):`<div class="panel meta">Nenhuma empresa com esses filtros. ${leads.length?"Afrouxe os filtros.":"Faça uma busca para começar."}</div>`;
+ $("#more").innerHTML=all.length>shown?`<button id="mBtn">Mostrar mais (${all.length-shown} restantes)</button>`:"";
+ if($("#mBtn"))$("#mBtn").onclick=()=>{shown+=PAGE;render()};
+ document.querySelectorAll("[data-st]").forEach(s=>s.onchange=()=>{ST[s.dataset.st]=s.value;save();render()});
+ document.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>{
+  const l=leads.find(x=>x.id==b.dataset.copy);
+  navigator.clipboard.writeText(template(l)).then(()=>{b.textContent="Copiado";setTimeout(()=>b.textContent="Copiar mensagem",1200)}).catch(()=>{b.textContent="Não consegui copiar"});
+ });
+}
+
+$("#csv").onclick=()=>{
+ const H=["Nome","Segmento","Telefone","WhatsApp","E-mail","Site","Instagram","Endereço","Horário","Ficha completa","Situação","OSM"];
+ const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+ const rows=filtered().map(l=>[l.name,l.cat,l.phone,l.waNum,l.email,l.site,l.insta,l.addr,l.hours,complete(l)?"sim":"não",ST[l.id]||"novo",l.osm].map(q).join(","));
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(new Blob(["\ufeff"+[H.map(q).join(","),...rows].join("\n")],{type:"text/csv;charset=utf-8"}));
+ a.download="leads.csv";a.click();
+};
+
+if(meta){$("#msg").textContent=`Última busca: ${meta.city} (${meta.radKm} km), ${leads.length} empresas.`}
+render();
+</script>
+</body>
+</html>
